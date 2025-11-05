@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: arrematei_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - ${DB_PORT:-5432}:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: arrematei_pgadmin
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    ports:
+      - ${PGADMIN_PORT:-8081}:80
+    depends_on:
+      - db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  redis:
+    image: redis:alpine
+    container_name: arrematei_redis
+    restart: unless-stopped
+    ports:
+      - ${REDIS_PORT:-6379}:6379
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: arrematei_redisinsight
+    restart: unless-stopped
+    ports:
+      - ${REDISINSIGHT_PORT:-8001}:5540
+    depends_on:
+      - redis
+    volumes:
+      - redisinsight_data:/db
+
+volumes:
+  db_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  redis_data:
+    driver: local
+  redisinsight_data:
+    driver: local
